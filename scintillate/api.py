@@ -15,7 +15,7 @@ from collections import deque
 from datetime import datetime
 
 DIRECTORY = os.path.expanduser('~/data/flickr/')
-STATS_FILENAME = os.path.join(DIRECTORY, 'stats.json')
+STATS_FILENAME = os.path.join(DIRECTORY, 'stats2.json')
 PHOTO_FILENAME = os.path.join(DIRECTORY, 'photos.tar.gz')
 
 NAPI = 1800 # lets start off slow
@@ -195,7 +195,35 @@ class Flickr(object):
         self.check_rate()
         # return self._exif(self.flickr.photos_getExif(**tmp))
         return _json(self.flickr.photos_getExif(**tmp))['photo']
-
+    
+    def getstats(self, date):
+        '''Generator: gets the stats from a date
+        date is a datetime object'''
+        tmp = dict(date=date.strftime('%Y-%m-%d'),
+                   format='json',
+                   per_page=500)
+        out = {'date':tmp['date']}
+        
+        self.check_rate()
+        out['views'] = _json(self.flickr.stats_getTotalViews(**tmp))['stats']
+        for k,v in out['views'].iteritems():
+            out['views'][k] = int(v['views'])
+        
+        self.check_rate()
+        out['domainlist'] = []
+        t = _json(self.flickr.stats_getPhotostreamDomains(**tmp))['domains']
+        if int(t['total']) > 0:
+            t = t['domain']
+            for domain in t:
+                t2 = _json(self.flickr.stats_getPhotostreamReferrers(domain=domain['name'], **tmp))
+                domain['referrer'] = t2['domain']['referrer']
+                out['domainlist'].append(domain)
+        
+        self.check_rate()
+        out['photos'] = _json(self.flickr.stats_getPopularPhotos(**tmp))
+        
+        return out
+    
     def genphotos(self, **kwargs):
         '''Walk my photos'''
         tmp = dict(
@@ -210,9 +238,6 @@ class Flickr(object):
             if i%tmp['per_page'] == 0:
                 self.check_rate()
         
-    def genstats(self):
-        '''Generator: gets the stats from a date'''
-    
     
     
     def _photo(self, photo):
@@ -287,11 +312,13 @@ if __name__ == '__main__':
     util.setup_stop()
     
     api = Flickr()
-    for photo in api.genphotos():
-        print photo
-        break
+    # for photo in api.genphotos():
+    #     print photo
+    #     break
     # print api.getinfo('8409361473')
     # nprint(api.getexif('8409361473'))
+    
+    nprint(api.getstats(datetime(2014,6,5)))
     
     # check rate limit in api
     # for x in range(100):
