@@ -163,7 +163,8 @@ def convert_time(timestr):
     return datetime.fromtimestamp(int(timestr))
 
 
-
+def _json(item):
+    return json.loads(item[14:-1])# strip out the container function
 
 
 class Flickr(object):
@@ -173,30 +174,27 @@ class Flickr(object):
         '''
         self.flickr = flickrapi.FlickrAPI(*credentials, format=fmt, cache=cache)
         if cache:
-            self.flickr.cache = flickrapi.SimpleCache(timeout=30000, 
-                                                      max_entries=2000)
+            c = flickrapi.SimpleCache(timeout=30000, max_entries=2000)
+            self.flickr.cache = c # mainly for length reasons
     
-    @ratelimit(NAPI,NTIME)
+    @ratelimit(NAPI, NTIME)
     def check_rate(self):
         '''run before each flickr call'''
-        pass
     
-    def _get(self, itemstr):
-        '''Get a dictionary from the json string'''
-        item = itemstr[14:-1] # strip out the container function
-        return json.loads(item)
-
     def getinfo(self, ident, **kwargs):
-        tmp = dict(photo_id=ident)
+        '''Get the information'''
+        tmp = dict(photo_id=ident, format='json')
         tmp.update(kwargs)
         self.check_rate()
-        return self._info(self.flickr.photos_getInfo(**tmp))
+        # return self._info(self.flickr.photos_getInfo(**tmp))
+        return _json(self.flickr.photos_getInfo(**tmp))['photo']
 
     def getexif(self, ident, **kwargs):
-        tmp = dict(photo_id=ident)
+        tmp = dict(photo_id=ident, format='json')
         tmp.update(kwargs)
         self.check_rate()
-        return self._exif(self.flickr.photos_getExif(**tmp))
+        # return self._exif(self.flickr.photos_getExif(**tmp))
+        return _json(self.flickr.photos_getExif(**tmp))['photo']
 
     def genphotos(self, **kwargs):
         '''Walk my photos'''
@@ -204,6 +202,7 @@ class Flickr(object):
             user_id = 'me', # me or flickr ID
             media = 'all',  # photos / videos / all
             per_page = 500, # < 500
+            # format = 'etree', # stupid
         )
         tmp.update(kwargs)
         for i,photo in enumerate(self.flickr.walk(**tmp)):
@@ -213,7 +212,6 @@ class Flickr(object):
         
     def genstats(self):
         '''Generator: gets the stats from a date'''
-        
     
     
     
@@ -228,46 +226,46 @@ class Flickr(object):
         )
         return out
     
-    def _info(self, info):
-        ''' Parse out the info data
-        now: id, media, rotation, uploaded, views, title, description,
-             lastupdate, posted, taken, ispublic
-        todo: notes, tags, people, comments
-        '''
-        photo = info.find('photo')
-        out = dict(
-            id = photo.get('id'), # copy
-            media = photo.get('media'),
-            rotation = photo.get('rotation'),
-            uploaded = photo.get('dateuploaded'),
-            views = photo.get('views'),
-            title = photo.find('title').text,
-            description = photo.find('description').text,
-            lastupdate = photo.find('dates').get('lastupdate', ''),
-            posted = photo.find('dates').get('posted', ''),
-            taken = photo.find('dates').get('taken', ''),
-            ispublic = photo.find('visibility').get('ispublic') == 1,
-        )
-        return out
-    
-    def _exif(self, exif):
-        '''Get _ALL_ of the exif data.  This is quite verbose! should make
-        this into some sort of DB since many of the values are going to be 
-        the same.
-        '''
-        photo = exif.find('photo')
-        out = {'id':photo.get('id')}
-        for item in photo.findall('exif'):
-            # there are some tag collisions in this technique -- but it is ok
-            out[item.get('tag')] = dict(
-                label = item.get('label'),
-                tagspace = item.get('tagspace'),
-                raw = item.find('raw').text,
-            )
-            clean = item.find('clean')
-            if clean is not None:
-                out[item.get('tag')]['clean'] = clean.text
-        return out
+    # def _info(self, info):
+    #     ''' Parse out the info data
+    #     now: id, media, rotation, uploaded, views, title, description,
+    #          lastupdate, posted, taken, ispublic
+    #     todo: notes, tags, people, comments
+    #     '''
+    #     photo = info.find('photo')
+    #     out = dict(
+    #         id = photo.get('id'), # copy
+    #         media = photo.get('media'),
+    #         rotation = photo.get('rotation'),
+    #         uploaded = photo.get('dateuploaded'),
+    #         views = photo.get('views'),
+    #         title = photo.find('title').text,
+    #         description = photo.find('description').text,
+    #         lastupdate = photo.find('dates').get('lastupdate', ''),
+    #         posted = photo.find('dates').get('posted', ''),
+    #         taken = photo.find('dates').get('taken', ''),
+    #         ispublic = photo.find('visibility').get('ispublic') == 1,
+    #     )
+    #     return out
+    #
+    # def _exif(self, exif):
+    #     '''Get _ALL_ of the exif data.  This is quite verbose! should make
+    #     this into some sort of DB since many of the values are going to be
+    #     the same.
+    #     '''
+    #     photo = exif.find('photo')
+    #     out = {'id':photo.get('id')}
+    #     for item in photo.findall('exif'):
+    #         # there are some tag collisions in this technique -- but it is ok
+    #         out[item.get('tag')] = dict(
+    #             label = item.get('label'),
+    #             tagspace = item.get('tagspace'),
+    #             raw = item.find('raw').text,
+    #         )
+    #         clean = item.find('clean')
+    #         if clean is not None:
+    #             out[item.get('tag')]['clean'] = clean.text
+    #     return out
 
 
 
@@ -278,7 +276,7 @@ def nprint(item, **kwargs):
     if isinstance(item, xml.etree.ElementTree.Element):
         xml.etree.ElementTree.dump(item)
     elif isinstance(item,str) and 'jsonFlickrApi' in item:
-        pprint(_getJson(item), **kwargs)
+        pprint(_json(item), **kwargs)
     else:
         pprint(item, **kwargs)
 
