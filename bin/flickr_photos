@@ -1,0 +1,41 @@
+#!/usr/bin/python
+import sys
+import scintillate
+from urllib2 import HTTPError
+
+def main():
+    api = scintillate.Flickr()
+    
+    with scintillate.Data() as data:
+        try:
+            idents = [d['id'] for d in data]
+            for photo in api.genphotos():
+                ident = photo['id']
+                sys.stdout.write('{} '.format(ident))
+                sys.stdout.flush()
+                if ident in idents:
+                    continue
+                
+                # print 'Working on : {}'.format(ident)
+                try:
+                    photo['info'] = api.getinfo(ident)
+                    photo['exif'] = api.getexif(ident)
+                    data.append(photo)
+                    idents.append(ident)
+                    # status
+                    upload = scintillate.convert_time(photo['info']['dateuploaded'])
+                    print ' added: {} {} '.format(photo['title'], upload)
+                    
+                except HTTPError:
+                    print 'httpError: {}'.format(ident)
+                
+                
+        except KeyboardInterrupt as e:
+            print 'Bye!'
+        except Exception as e:
+            print 'Failed'
+            raise
+
+
+if __name__ == '__main__':
+    main()

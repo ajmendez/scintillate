@@ -1,6 +1,7 @@
 .DS_Store
 .ipynb_checkpoints
 
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -11,7 +12,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
-bin/
+# bin/
 build/
 develop-eggs/
 dist/
