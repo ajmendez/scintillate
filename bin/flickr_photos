@@ -24,7 +24,7 @@ def main():
                     idents.append(ident)
                     # status
                     upload = scintillate.convert_time(photo['info']['dateuploaded'])
-                    print ' added: {} {} '.format(photo['title'], upload)
+                    print ' added: {} {} {}'.format(photo['title'], upload, len(data))
                     
                 except HTTPError:
                     print 'httpError: {}'.format(ident)

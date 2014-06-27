@@ -18,7 +18,7 @@ DIRECTORY = os.path.expanduser('~/data/flickr/')
 STATS_FILENAME = os.path.join(DIRECTORY, 'stats.json')
 PHOTO_FILENAME = os.path.join(DIRECTORY, 'photos.tar.gz')
 
-NAPI = 2600
+NAPI = 1800 # lets start off slow
 NTIME = 3600
 
 try:
