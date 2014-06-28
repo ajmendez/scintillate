@@ -32,6 +32,10 @@ def main():
                 
         except KeyboardInterrupt as e:
             print 'Bye!'
+        
+        except IOError as e:
+            print 'Date: {}'.format(d)
+            print 'API Issue? : {}'.format(e)
         # except Exception as e:
         #     print 'Failed'
         #     raise

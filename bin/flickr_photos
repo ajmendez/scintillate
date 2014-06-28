@@ -20,11 +20,11 @@ def main():
                 # print 'Working on : {}'.format(ident)
                 try:
                     photo['info'] = api.getinfo(ident)
-                    photo['exif'] = api.getexif(ident)
+                    # photo['exif'] = api.getexif(ident)
                     data.append(photo)
                     idents.append(ident)
                     # status
-                    upload = scintillate.convert_time(photo['info']['dateuploaded'])
+                    upload = scintillate.convert_time(photo['info']['dates']['lastupdate'])
                     print ' added: {} {} {}'.format(photo['title'], upload, len(data))
                     
                 except HTTPError:

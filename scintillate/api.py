@@ -29,6 +29,18 @@ except Exception as e:
     CREDENTIALS = None
 
 
+import xml.etree
+def nprint(item, **kwargs):
+    '''A simple helper function do print out some things'''
+    if isinstance(item, xml.etree.ElementTree.Element):
+        xml.etree.ElementTree.dump(item)
+    elif isinstance(item,str) and 'jsonFlickrApi' in item:
+        pprint(_json(item), **kwargs)
+    else:
+        pprint(item, **kwargs)
+
+
+
 # from forage -- should be moved to mUtil
 class Data(object):
   def __init__(self, filename=PHOTO_FILENAME, fcn=list):
@@ -170,7 +182,10 @@ def convert_time(timestr):
 
 
 def _json(item):
-    return json.loads(item[14:-1])# strip out the container function
+    data = json.loads(item[14:-1])# strip out the container function
+    if data['stat'] == 'fail':
+        raise IOError('API Error: {}'.format(data))
+    return data
 
 
 class Flickr(object):
@@ -256,60 +271,10 @@ class Flickr(object):
             public = photo.get('ispublic') == '0',
         )
         return out
-    
-    # def _info(self, info):
-    #     ''' Parse out the info data
-    #     now: id, media, rotation, uploaded, views, title, description,
-    #          lastupdate, posted, taken, ispublic
-    #     todo: notes, tags, people, comments
-    #     '''
-    #     photo = info.find('photo')
-    #     out = dict(
-    #         id = photo.get('id'), # copy
-    #         media = photo.get('media'),
-    #         rotation = photo.get('rotation'),
-    #         uploaded = photo.get('dateuploaded'),
-    #         views = photo.get('views'),
-    #         title = photo.find('title').text,
-    #         description = photo.find('description').text,
-    #         lastupdate = photo.find('dates').get('lastupdate', ''),
-    #         posted = photo.find('dates').get('posted', ''),
-    #         taken = photo.find('dates').get('taken', ''),
-    #         ispublic = photo.find('visibility').get('ispublic') == 1,
-    #     )
-    #     return out
-    #
-    # def _exif(self, exif):
-    #     '''Get _ALL_ of the exif data.  This is quite verbose! should make
-    #     this into some sort of DB since many of the values are going to be
-    #     the same.
-    #     '''
-    #     photo = exif.find('photo')
-    #     out = {'id':photo.get('id')}
-    #     for item in photo.findall('exif'):
-    #         # there are some tag collisions in this technique -- but it is ok
-    #         out[item.get('tag')] = dict(
-    #             label = item.get('label'),
-    #             tagspace = item.get('tagspace'),
-    #             raw = item.find('raw').text,
-    #         )
-    #         clean = item.find('clean')
-    #         if clean is not None:
-    #             out[item.get('tag')]['clean'] = clean.text
-    #     return out
 
 
 
 
-import xml.etree
-def nprint(item, **kwargs):
-    '''A simple helper function do print out some things'''
-    if isinstance(item, xml.etree.ElementTree.Element):
-        xml.etree.ElementTree.dump(item)
-    elif isinstance(item,str) and 'jsonFlickrApi' in item:
-        pprint(_json(item), **kwargs)
-    else:
-        pprint(item, **kwargs)
 
 
 # debug
