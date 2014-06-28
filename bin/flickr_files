@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import scintillate
+from urllib2 import HTTPError
+from collections import OrderedDict
+from datetime import datetime, timedelta
+
+DIRECTORIES = [
+    os.path.expanduser('~/Pictures/'),
+    '/Volumes/Storage/',
+    '/Volumes/Pictures/',
+]
+UPDATE = ('update' in sys.argv)
+
+def main(directories):
+    local = scintillate.Directory()
+    with scintillate.Data(scintillate.LOCAL_FILENAME, OrderedDict) as data:
+        try:
+            for directory in directories:
+                if ( (not os.path.exists(directory)) or 
+                     ( (directory in data) and (not UPDATE) ) ):
+                    continue
+                
+                local.walk(directory)
+                for d, photos in local.data.iteritems():
+                    data[d] = photos
+        except KeyboardInterrupt as e:
+            print 'Bye!'
+
+
+if __name__ == '__main__':
+    # from pysurvey import util
+    # util.setup_stop()
+    
+    # pull in any other directories
+    if len(sys.argv) > 2:
+        DIRECTORIES = [os.path.expanduser(x) for x in sys.argv[1:]]
+    
+    
+    main(DIRECTORIES)

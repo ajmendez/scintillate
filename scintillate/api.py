@@ -68,6 +68,12 @@ class Data(object):
   def __iter__(self):
       return iter(self.data)
   
+  def __getitem__(self, key):
+      return self.data[key]
+  
+  def __setitem__(self, key, value):
+      self.data[key] = value
+  
   def save(self):
     '''Save the file as a json.dump or a tarfile depending
     on the file ending'''
