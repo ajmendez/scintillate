@@ -21,6 +21,10 @@ PHOTO_FILENAME = os.path.join(DIRECTORY, 'photos.tar.gz')
 NAPI = 1800 # lets start off slow
 NTIME = 3600
 
+DATETIME_TAGS = ['CreateDate', 'DateTime', 'DateTimeDigitized', 'DateTimeOriginal']
+SUBSEC_TAGS = ['SubSecTime', 'SubSecTimeDigitized', 'SubSecTimeOriginal']
+
+
 try:
     from pymendez import auth
     CREDENTIALS = auth('flickr',['key', 'secret', 'username', 'token'])
@@ -89,6 +93,7 @@ class Data(object):
   def save(self):
     '''Save the file as a json.dump or a tarfile depending
     on the file ending'''
+    print 'Saving: {}'.format(self.filename)
     if '.tar.gz' in self.filename:
       self.savegz()
     else:
@@ -96,6 +101,7 @@ class Data(object):
   
   def load(self):
     '''Load the file as a json file or a tar file.'''
+    print 'Loading: {}'.format(self.filename)
     if '.tar.gz' in self.filename:
       return self.loadgz()
     else:
@@ -150,23 +156,20 @@ def ratelimit(n=3600, timescale=3600):
                 # block until we can pop
                 if (now - calls[0]) > timescale:
                     calls.pop(0)
-                    
                     break
                 else:
                     sys.stdout.write('.')
                     sys.stdout.flush()
-                    doprint = True
-                    # print 'Holding until rolling average [n={},t={}]'.format(n,timescale)
+                    # doprint = True
                     time.sleep(0.5)
                     now = calendar.timegm(time.gmtime())
-            if doprint:
-                sys.stdout.write('\n')
+            # if doprint:
+            #     sys.stdout.write('\n')
             
-            # Spread out calls into some nice range
-            calls.append(now)
-            time.sleep(float(n)/timescale) # TODO uncomment after debug
-            # sys.stdout.write('r:{}'.format(len(calls)))
-            # sys.stdout.flush()
+            # sleep to spread out the load
+            time.sleep(float(n)/timescale)
+            # keep track of when things were run
+            calls.append(calendar.timegm(time.gmtime()))
             return func(*args, **kwargs)
         return ratelimiter
     return decorate
@@ -211,11 +214,58 @@ class Flickr(object):
         return _json(self.flickr.photos_getInfo(**tmp))['photo']
 
     def getexif(self, ident, **kwargs):
+        '''Get a dictionary of the exif data.'''
         tmp = dict(photo_id=ident, format='json')
         tmp.update(kwargs)
         self.check_rate()
         # return self._exif(self.flickr.photos_getExif(**tmp))
-        return _json(self.flickr.photos_getExif(**tmp))['photo']
+        return _json(self.flickr.photos_getExif(**tmp))['photo']['exif']
+    
+    def getexiftag(self, exif, tag):
+        for item in exif:
+            if item['tag'].lower() == tag.lower():
+                return item['raw']['_content']
+    
+    def _silenttags(self, exif, tags, fcn):
+        '''Searches the exif for one tag and then applies a function to it.
+        returns 0 if nothing found.'''
+        for tag in tags:
+            try:
+                return fcn(self.getexiftag(exif,tag))
+            except Exception as e:
+                pass
+        return 0
+    
+    def parseexifdate(self, datestr):
+        '''Parse the date from the exif string'''
+        if '-' in datestr:
+            datestr = datestr.replace('-', ':')
+        tmp = datetime.strptime(datestr, '%Y:%m:%d %H:%M:%S')
+        return calendar.timegm(tmp.timetuple())
+    
+    def getexifdate(self, exif):
+        return self._silenttags(exif, DATETIME_TAGS, self.parseexifdate)
+    
+    def getexifsubsec(self, exif):
+        '''Get the subsec(ond) part of the exif data. This makes the 
+        exif data more uniq.'''
+        fcn = lambda x: float(x)/100.0
+        return self._silenttags(exif, SUBSEC_TAGS, fcn)
+    
+    def getexiftime(self, ident, exif=None, **kwargs):
+        ndate = 0
+        try:
+            if exif is None:
+                exif = self.getexif(ident, **kwargs)
+            ndate += self.getexifdate(exif)
+            ndate += self.getexifsubsec(exif)
+            return ndate
+        except IOError as e:
+            print 'Failed to load: {}'.format(e)
+            
+        
+        
+
     
     def getstats(self, date):
         '''Generator: gets the stats from a date
@@ -287,9 +337,9 @@ if __name__ == '__main__':
     #     print photo
     #     break
     # print api.getinfo('8409361473')
-    # nprint(api.getexif('8409361473'))
+    nprint(api.getexif('8409361473'))
     
-    nprint(api.getstats(datetime(2014,6,5)))
+    # nprint(api.getstats(datetime(2014,6,5)))
     
     # check rate limit in api
     # for x in range(100):

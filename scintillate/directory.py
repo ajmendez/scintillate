@@ -9,8 +9,9 @@ from datetime import datetime
 
 LOCAL_FILENAME = os.path.join(api.DIRECTORY, 'local.tar.gz')
 EXTS = ['jpg','jpeg', 'cr2', 'png', 'mov']
-DATETIME_TAGS = ['DateTime', 'DateTimeDigitized', 'DateTimeOriginal']
-SUBSEC_TAGS = ['SubsecTime', 'SubsecTimeDigitized', 'SubsecTimeOriginal']
+
+
+
 import PIL.Image, PIL.ExifTags
 def getExif(filename):
     '''Gets the EXIF data from a file'''
@@ -50,7 +51,7 @@ class Directory(object):
         return calendar.timegm(tmp.timetuple())
     
     def getdate(self, exif):
-        for tag in DATETIME_TAGS:
+        for tag in api.DATETIME_TAGS:
             try:
                 tmp = self.gettag(exif, tag)
                 return self.parsedate(tmp)
@@ -59,7 +60,7 @@ class Directory(object):
         return 0
     
     def getsubsec(self, exif):
-        for tag in SUBSEC_TAGS:
+        for tag in api.SUBSEC_TAGS:
             try:
                 tmp = self.gettag(exif, tag)
                 return float(tmp)/100.0

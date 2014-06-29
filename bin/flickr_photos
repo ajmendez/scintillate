@@ -4,6 +4,8 @@ import sys
 import scintillate
 from urllib2 import HTTPError
 
+UPDATE = ('update' in sys.argv)
+
 def main():
     api = scintillate.Flickr()
     
@@ -38,5 +40,34 @@ def main():
             raise
 
 
+def update():
+    api = scintillate.Flickr()
+    
+    with scintillate.Data() as data:
+        try:
+            for d in data:
+                if 'exiftime' in d:
+                    continue
+                
+                try:
+                    d['exiftime'] = api.getexiftime(d['id'])
+                    
+                    upload = scintillate.convert_time(d['info']['dates']['lastupdate'])
+                    print ' updated: {} {} {}'.format(d['title'], upload, len(data))
+                except HTTPError:
+                    print 'httpError: {}'.format(ident)
+                
+                
+        except KeyboardInterrupt as e:
+            print 'Bye!'
+        except Exception as e:
+            print 'Failed'
+            raise
+
+
+
 if __name__ == '__main__':
-    main()
+    if UPDATE:
+        update()
+    else:
+        main()
