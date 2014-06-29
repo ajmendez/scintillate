@@ -52,7 +52,7 @@ def update():
                 try:
                     d['exiftime'] = api.getexiftime(d['id'])
                     
-                    upload = scintillate.convert_time(d['info']['dates']['lastupdate'])
+                    upload = scintillate.convert_time(d['exiftime'])
                     print ' updated: {} {} {}'.format(d['title'], upload, len(data))
                 except HTTPError:
                     print 'httpError: {}'.format(ident)
