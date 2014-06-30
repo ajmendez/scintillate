@@ -181,7 +181,7 @@ def testrate(i):
 
 
 def convert_time(timestr):
-    return datetime.fromtimestamp(int(timestr))
+    return datetime.fromtimestamp(float(timestr))
 
 
 def _json(item):
