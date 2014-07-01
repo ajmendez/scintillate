@@ -3,6 +3,7 @@ import sys
 import api
 import time
 import calendar
+import exifread
 import collections
 from pprint import pprint
 from datetime import datetime
@@ -16,12 +17,14 @@ import PIL.Image, PIL.ExifTags
 def getExif(filename):
     '''Gets the EXIF data from a file'''
     badTags = ['MakerNote', 'UserComment']
+    badTags = []
     ret = {}
     try:
         image = PIL.Image.open(filename)
         if hasattr(image, '_getexif'):
             exifinfo = image._getexif()
             if exifinfo != None:
+                # pprint(exifinfo)
                 # ret['_filename'] = filename
                 for tag, value in exifinfo.items():
                     decoded = PIL.ExifTags.TAGS.get(tag, tag)
@@ -43,6 +46,14 @@ class Directory(object):
         for number,name in PIL.ExifTags.TAGS.iteritems():
             if name == tag:
                 return exif[number]
+
+    def gettags(self, exif, tags, fcn):
+        for tag in tags:
+            try:
+                tmp = self.gettag(exif, tag)
+                return fcn(tmp)
+            except:
+                pass
     
     def parsedate(self, datestr):
         if '-' in datestr:
@@ -50,36 +61,38 @@ class Directory(object):
         tmp = datetime.strptime(datestr, '%Y:%m:%d %H:%M:%S')
         return calendar.timegm(tmp.timetuple())
     
+    
     def getdate(self, exif):
-        for tag in api.DATETIME_TAGS:
-            try:
-                tmp = self.gettag(exif, tag)
-                return self.parsedate(tmp)
-            except Exception as e:
-                pass
-        return 0
+        tmp = self.gettags(exif, api.DATETIME_TAGS, self.parsedate)
+        return tmp if tmp else 0
     
     def getsubsec(self, exif):
-        for tag in api.SUBSEC_TAGS:
-            try:
-                tmp = self.gettag(exif, tag)
-                return float(tmp)/100.0
-            except Exception as e:
-                pass
-        return 0
+        fcn = lambda x: float(x)/100.0
+        tmp = self.gettags(exif, api.SUBSEC_TAGS, fcn)
+        return tmp if tmp else 0
     
-    def exifdate(self, filename):
+    def exifdate(self, exif):
         ndate = 0
         try:
-            image = PIL.Image.open(filename)
-            # pprint(getExif(filename))
-            if hasattr(image, '_getexif'):
-                exif  = image._getexif()
-                ndate += self.getdate(exif)
-                ndate += self.getsubsec(exif)
+            ndate += self.getdate(exif)
+            ndate += self.getsubsec(exif)
             return ndate
         except IOError as e:
             print 'Failed to load: {}'.format(e)
+        return ndate
+    
+    def camserial(self, exif):
+        return -1
+    
+    def imgserial(self, exif):
+        return -1
+    
+    def getexif(self, filename):
+        return exifread.process_file(open(filename, 'rb'))
+        # image = PIL.Image.open(filename)
+        # # pprint(getExif(filename))
+        # if hasattr(image, '_getexif'):
+        #     exif  = image._getexif()
     
     def cdate(self, date):
         if isinstance(date, (int, float)):
@@ -91,13 +104,16 @@ class Directory(object):
     
     def file(self, filename):
         '''get a filename'''
+        exif = self.getexif(filename)
         out = dict(
             filename = os.path.basename(filename),
                title = os.path.splitext(os.path.basename(filename))[0],
                 size = os.path.getsize(filename),
              created = os.path.getctime(filename),
             modified = os.path.getmtime(filename),
-                exif = self.exifdate(filename),
+                exif = self.exifdate(exif),
+            camserial = self.camserial(exif),
+            imgserial = self.imgserial(exif),
         )
         return out
     
@@ -110,7 +126,7 @@ class Directory(object):
         for file in files:
             fullfile = os.path.join(directory, file)
             ext = os.path.splitext(file)[1].replace('.','')
-            if (len(ext) > 0) and (ext in self.exts):
+            if (len(ext) > 0) and (ext.lower() in self.exts):
                 tmp.append(self.file(fullfile))
 
         if len(tmp) > 0:
@@ -132,7 +148,22 @@ if __name__ == '__main__':
     util.setup_stop()
     
     
-    local = Directory(sys.argv[1])
-    local.walk()
+    # local = Directory()
+#     local.walk(sys.argv[1])
+    
+    # pprint(getExif('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2957.JPG'))
+    #[13, 88, 211, 211, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
+    # [10, 88, 141, 208, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
+    # [11, 88, 145, 208, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
+    # [08, 88, 233, 209, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
+    # [94, 66, 103, 242, 226, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
+    
+    f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_4569.JPG','rb')
+    # f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2957.JPG','rb')
+    # f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2956.JPG','rb')
+    # f = open('/Users/ajmendez/Downloads/_pictures/ChTv638.jpg')
+    exif = exifread.process_file(f)
+    pprint(exif)
+    print exif['MakerNote ImageUniqueID']
     
     # pprint(getExif(os.path.abspath(os.path.expanduser(sys.argv[1]))))

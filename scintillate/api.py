@@ -23,7 +23,7 @@ NTIME = 3600
 
 DATETIME_TAGS = ['CreateDate', 'DateTime', 'DateTimeDigitized', 'DateTimeOriginal']
 SUBSEC_TAGS = ['SubSecTime', 'SubSecTimeDigitized', 'SubSecTimeOriginal']
-
+# SERIAL_TAGS = ['']
 
 try:
     from pymendez import auth

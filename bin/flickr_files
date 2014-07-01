@@ -22,7 +22,8 @@ def main(directories):
                 if ( (not os.path.exists(directory)) or 
                      ( (directory in data) and (not UPDATE) ) ):
                     continue
-                
+                    
+                print directory
                 local.walk(directory)
                 for d, photos in local.data.iteritems():
                     data[d] = photos
@@ -35,8 +36,9 @@ if __name__ == '__main__':
     # util.setup_stop()
     
     # pull in any other directories
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 1:
         DIRECTORIES = [os.path.expanduser(x) for x in sys.argv[1:]]
+        print DIRECTORIES
     
     
     main(DIRECTORIES)
