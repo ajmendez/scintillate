@@ -34,7 +34,9 @@ def main(directories):
 if __name__ == '__main__':
     # from pysurvey import util
     # util.setup_stop()
-    
+    if UPDATE:
+        sys.argv.pop(sys.argv.index('update'))
+        
     # pull in any other directories
     if len(sys.argv) > 1:
         DIRECTORIES = [os.path.expanduser(x) for x in sys.argv[1:]]

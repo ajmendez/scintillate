@@ -10,8 +10,8 @@ from datetime import datetime
 
 LOCAL_FILENAME = os.path.join(api.DIRECTORY, 'local.tar.gz')
 EXTS = ['jpg','jpeg', 'cr2', 'png', 'mov']
-
-
+DATETIME_TAGS = ['EXIF'+x for x in api.DATETIME_TAGS] + ['Image DateTime']
+SUBSEC_TAGS = ['EXIF'+x for x in api.SUBSEC_TAGS]
 
 import PIL.Image, PIL.ExifTags
 def getExif(filename):
@@ -43,9 +43,14 @@ class Directory(object):
         self.data = {}
     
     def gettag(self, exif, tag):
-        for number,name in PIL.ExifTags.TAGS.iteritems():
-            if name == tag:
-                return exif[number]
+        # if tag == 'MakerNote ImageUniqueID':
+        #     return list(exif[tag].values)
+        # else:
+        #     return str(exif[tag])
+        return exif[tag].values
+        # for number,name in PIL.ExifTags.TAGS.iteritems():
+        #     if name == tag:
+        #         return exif[number]
 
     def gettags(self, exif, tags, fcn):
         for tag in tags:
@@ -63,16 +68,17 @@ class Directory(object):
     
     
     def getdate(self, exif):
-        tmp = self.gettags(exif, api.DATETIME_TAGS, self.parsedate)
+        tags = ['exif ']
+        tmp = self.gettags(exif, DATETIME_TAGS, self.parsedate)
         return tmp if tmp else 0
     
     def getsubsec(self, exif):
         fcn = lambda x: float(x)/100.0
-        tmp = self.gettags(exif, api.SUBSEC_TAGS, fcn)
+        tmp = self.gettags(exif, SUBSEC_TAGS, fcn)
         return tmp if tmp else 0
     
     def exifdate(self, exif):
-        ndate = 0
+        ndate = 0.0
         try:
             ndate += self.getdate(exif)
             ndate += self.getsubsec(exif)
@@ -82,10 +88,25 @@ class Directory(object):
         return ndate
     
     def camserial(self, exif):
-        return -1
+        fcn = lambda x: x[0]
+        tmp = self.gettags(exif, ['MakerNote SerialNumber', 'MakerNote InternalSerialNumber '], fcn)
+        return tmp if tmp else 0
+    
+    def cammodel(self, exif):
+        fcn = lambda x: x
+        tmp = self.gettags(exif, ['Image Model'], fcn)
+        return tmp if tmp else 0
     
     def imgserial(self, exif):
-        return -1
+        fcn = lambda x: x if isinstance(x,str) else ''.join(hex(c)[2:] for c in x)
+        # fcn = lambda x: ''.join(hex(c)[2:] for c in x)
+        tmp = self.gettags(exif, ['MakerNote ImageUniqueID'], fcn)
+        return tmp if tmp else 0
+    
+    def imgnumber(self, exif):
+        fcn = lambda x: x[0]
+        tmp = self.gettags(exif, ['MakerNote ImageNumber'], fcn)
+        return tmp if tmp else 0
     
     def getexif(self, filename):
         return exifread.process_file(open(filename, 'rb'))
@@ -112,8 +133,9 @@ class Directory(object):
              created = os.path.getctime(filename),
             modified = os.path.getmtime(filename),
                 exif = self.exifdate(exif),
-            camserial = self.camserial(exif),
-            imgserial = self.imgserial(exif),
+           camserial = self.camserial(exif),
+           imgserial = self.imgserial(exif),
+           imgnumber = self.imgnumber(exif),
         )
         return out
     
@@ -128,7 +150,8 @@ class Directory(object):
             ext = os.path.splitext(file)[1].replace('.','')
             if (len(ext) > 0) and (ext.lower() in self.exts):
                 tmp.append(self.file(fullfile))
-
+            sys.stdout.write('.')
+            sys.stdout.flush()
         if len(tmp) > 0:
             self.data[directory] = tmp
             print 'Finished: {: 4d} : {}'.format(len(tmp), directory)
@@ -148,8 +171,9 @@ if __name__ == '__main__':
     util.setup_stop()
     
     
-    # local = Directory()
-#     local.walk(sys.argv[1])
+    local = Directory()
+    local.walk(sys.argv[1])
+    pprint(local.data)
     
     # pprint(getExif('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2957.JPG'))
     #[13, 88, 211, 211, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
@@ -158,12 +182,13 @@ if __name__ == '__main__':
     # [08, 88, 233, 209, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
     # [94, 66, 103, 242, 226, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
     
-    f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_4569.JPG','rb')
+    # f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_4019.JPG','rb')
+    f =open('/Users/ajmendez/Desktop/tmp/IMG_0834.JPG','rb')
     # f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2957.JPG','rb')
     # f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2956.JPG','rb')
     # f = open('/Users/ajmendez/Downloads/_pictures/ChTv638.jpg')
     exif = exifread.process_file(f)
-    pprint(exif)
-    print exif['MakerNote ImageUniqueID']
-    
+    # pprint(exif)
+    # print exif['MakerNote ImageUniqueID']
+    # raise ValueError()
     # pprint(getExif(os.path.abspath(os.path.expanduser(sys.argv[1]))))
