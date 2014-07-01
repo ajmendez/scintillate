@@ -16,6 +16,7 @@ from datetime import datetime
 
 DIRECTORY = os.path.expanduser('~/data/flickr/')
 STATS_FILENAME = os.path.join(DIRECTORY, 'stats2.json')
+APISTATS_FILENAME = os.path.join(DIRECTORY, 'apistats.json')
 PHOTO_FILENAME = os.path.join(DIRECTORY, 'photos.tar.gz')
 
 NAPI = 1800 # lets start off slow
@@ -138,6 +139,9 @@ class Data(object):
   
   def get(self, key):
     return [item[key] for item in self.data]
+  
+  def update(self, up):
+      self.data.update(up)
 
 
 
@@ -252,17 +256,43 @@ class Flickr(object):
         fcn = lambda x: float(x)/100.0
         return self._silenttags(exif, SUBSEC_TAGS, fcn)
     
-    def getexiftime(self, ident, exif=None, **kwargs):
+    def getexiftime(self, exif, **kwargs):
         ndate = 0
         try:
-            if exif is None:
-                exif = self.getexif(ident, **kwargs)
+            # if exif is None:
+            #     exif = self.getexif(ident, **kwargs)
             ndate += self.getexifdate(exif)
             ndate += self.getexifsubsec(exif)
             return ndate
         except IOError as e:
             print 'Failed to load: {}'.format(e)
-            
+    
+    def genexifitems(self, exif):
+        fcn = lambda x: x
+        items = dict(
+            cammodel = ['CanonModelID', 'Model'],
+            camlens = ['LensType'],
+            camserial = ['SerialNumber','InternalSerialNumber'],
+            camexposure = ['ExposureTime'],
+            camaperature = ['FNumber'],
+            camiso = ['ISO', 'CameraISO'],
+            camfocal = ['FocalLength'],
+            camev = ['MeasuredEV'],
+            imgserial = ['ImageUniqueID'],
+            temperature = ['CameraTemperature'],
+            imgnumber = ['FileNumber','FileIndex'],
+            imgdir = ['DirectoryIndex']
+        )
+        for item,tags in items.iteritems():
+            yield item, self._silenttags(exif, tags, fcn)
+    
+    # def getexifimgserial(self, exif):
+    #     fcn = lambda x: x
+    #     return self._silenttags(exit, ['ImageUniqueID'], fcn)
+    #
+    # def getexiftemp(self, exif):
+    #     fcn = lambda x: x
+    #     return self._silenttags(exit, ['CameraTemperature'], fcn)
         
         
 

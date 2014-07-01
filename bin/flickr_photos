@@ -2,6 +2,7 @@
 
 import sys
 import scintillate
+from pprint import pprint
 from urllib2 import HTTPError
 
 UPDATE = ('update' in sys.argv)
@@ -46,14 +47,19 @@ def update():
     with scintillate.Data() as data:
         try:
             for i, d in enumerate(data):
-                if 'exiftime' in d:
+                if 'temperature' in d:
                     continue
                 
                 try:
-                    d['exiftime'] = api.getexiftime(d['id'])
+                    exif = api.getexif(d['id'])
+                    d['exiftime'] = api.getexiftime(exif)
+                    for item, value in api.genexifitems(exif):
+                        d[item] = value
+                    d.pop('exifdata',None)
                     
-                    upload = scintillate.convert_time(d['exiftime'])
-                    print ' updated: {} {} {:0.2f}'.format(d['title'], upload, 100.0*i/float(len(data)))
+                    
+                    snap = scintillate.convert_time(d['exiftime'])
+                    print ' updated: {} {} {} {:0.2f}'.format(d['id'], d['title'], snap, 100.0*i/float(len(data)))
                 except HTTPError:
                     print 'httpError: {}'.format(ident)
                 
@@ -68,6 +74,9 @@ def update():
 
 if __name__ == '__main__':
     if UPDATE:
+        from pysurvey import util
+        util.setup_stop()
+        
         update()
     else:
         main()
