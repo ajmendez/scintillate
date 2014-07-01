@@ -21,17 +21,17 @@ def getsoup():
     response = requests.get(URL, cookies=cj)
     return BeautifulSoup(response.text)
 
-def getoffset(k, timescale):
+def getoffset(dt, k, timescale):
     '''calculates the offset, soffset limits collisions'''
     if 'hour' in timescale:
         soffset = 0
         hours = k*1.0
     elif 'day' in timescale:
         soffset = 1
-        hours = k*24.0
+        hours = k*24.0 - (dt.hour%24)
     elif 'week' in timescale:
         soffset = 2
-        hours = k*24.0*7.0
+        hours = k*24.0*7.0 - (dt.isoweekday()%7)*24.0
     return timedelta(hours=hours, seconds=-soffset)
 
 def formatdate(dt):
@@ -52,7 +52,7 @@ def parsesoup(soup, date=None):
                 calls = int(tmp2[0])
                 timescale = tmp2[-1]
                 # print qps, calls, timescale
-                d = formatdate(date - getoffset(k, timescale))
+                d = formatdate(date - getoffset(date, k, timescale))
                 out[d] = dict(
                     date = d,
                     qps = qps,
