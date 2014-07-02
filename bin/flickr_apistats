@@ -28,10 +28,11 @@ def getoffset(dt, k, timescale):
         hours = k*1.0
     elif 'day' in timescale:
         soffset = 1
-        hours = k*24.0 - (dt.hour%24)
+        hours = k*24.0 + dt.hour%24
     elif 'week' in timescale:
         soffset = 2
-        hours = k*24.0*7.0 - (dt.isoweekday()%7)*24.0
+        hours = (k*7 + dt.isoweekday()%7)*24.0 + dt.hour%24
+        # k*24.0*7.0 + (dt.isoweekday()%7)*24.0
     return timedelta(hours=hours, seconds=-soffset)
 
 def formatdate(dt):
@@ -58,6 +59,7 @@ def parsesoup(soup, date=None):
                     qps = qps,
                     calls = calls,
                     timescale=timescale,
+                    run=formatdate(datetime.now()),
                 )
     return out
             

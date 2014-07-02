@@ -18,6 +18,7 @@ DIRECTORY = os.path.expanduser('~/data/flickr/')
 STATS_FILENAME = os.path.join(DIRECTORY, 'stats2.json')
 APISTATS_FILENAME = os.path.join(DIRECTORY, 'apistats.json')
 PHOTO_FILENAME = os.path.join(DIRECTORY, 'photos.tar.gz')
+EXIF_FILENAME = os.path.join(DIRECTORY, 'exif.tar.gz')
 
 NAPI = 1800 # lets start off slow
 NTIME = 3600

@@ -6,6 +6,7 @@ from pprint import pprint
 from urllib2 import HTTPError
 
 UPDATE = ('update' in sys.argv)
+EXIF = ('exif' in sys.argv)
 
 def main():
     api = scintillate.Flickr()
@@ -30,7 +31,8 @@ def main():
                     upload = scintillate.convert_time(photo['info']['dates']['lastupdate'])
                     print ' added: {} {} {}'.format(photo['title'], upload, len(data))
                     
-                except HTTPError:
+                except HTTPError as e:
+                    print e
                     print 'httpError: {}'.format(ident)
                 
                 
@@ -60,7 +62,43 @@ def update():
                     
                     snap = scintillate.convert_time(d['exiftime'])
                     print ' updated: {} {} {} {:0.2f}'.format(d['id'], d['title'], snap, 100.0*i/float(len(data)))
-                except HTTPError:
+                except HTTPError as e:
+                    print e
+                    print 'httpError: {}'.format(d)
+                
+                
+        except KeyboardInterrupt as e:
+            print 'Bye!'
+        except Exception as e:
+            print 'Failed'
+            raise
+
+
+
+def exif():
+    api = scintillate.Flickr()
+    
+    with scintillate.Data(scintillate.EXIF_FILENAME) as data:
+        try:
+            idents = [d['id'] for d in data]
+            for photo in api.genphotos():
+                ident = photo['id']
+                sys.stdout.write('{} '.format(ident))
+                sys.stdout.flush()
+                if ident in idents:
+                    continue
+                
+                # print 'Working on : {}'.format(ident)
+                try:
+                    photo['exif'] = api.getexif(ident)
+                    data.append(photo)
+                    idents.append(ident)
+                    
+                    upload = scintillate.convert_time(photo['info']['dates']['lastupdate'])
+                    print ' added: {} {} {}'.format(photo['title'], upload, len(data))
+                    
+                except HTTPError as e:
+                    print e
                     print 'httpError: {}'.format(ident)
                 
                 
@@ -72,11 +110,13 @@ def update():
 
 
 
+
 if __name__ == '__main__':
+    # from pysurvey import util
+    # util.setup_stop()
     if UPDATE:
-        from pysurvey import util
-        util.setup_stop()
-        
         update()
+    elif EXIF:
+        exif()
     else:
         main()
