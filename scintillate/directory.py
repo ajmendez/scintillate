@@ -1,6 +1,7 @@
 import os
 import sys
 import api
+import data
 import time
 import calendar
 import exifread
@@ -8,7 +9,7 @@ import collections
 from pprint import pprint
 from datetime import datetime
 
-LOCAL_FILENAME = os.path.join(api.DIRECTORY, 'local.tar.gz')
+LOCAL_FILENAME = os.path.join(data.DIRECTORY, 'local.tar.gz')
 EXTS = ['jpg','jpeg', 'cr2', 'png', 'mov']
 DATETIME_TAGS = ['EXIF'+x for x in api.DATETIME_TAGS] + ['Image DateTime']
 SUBSEC_TAGS = ['EXIF'+x for x in api.SUBSEC_TAGS]
