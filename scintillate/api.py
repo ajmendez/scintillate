@@ -203,15 +203,12 @@ class Flickr(object):
         out = []
         remove_index = []
         for i, item in enumerate(exif):
-            # out[i].pop('tagspaceid', None)
-            # out[i]['raw'] = out[i]['raw']['_content']
             tmp = [item[x].lower() for x in ['label','tag','tagspace']]
             isbad = any(b in it 
                         for it,bd in zip(tmp,BAD) 
                             for b in bd)
             if not isbad:
-                # remove_index.append(i)
-                out.append([item[x] for x in ['tag','raw','tagspace', 'label']])
+                out.append([str(item[x]) for x in ['tag','raw','tagspace', 'label']])
         return out
     
     
