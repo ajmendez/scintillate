@@ -90,12 +90,14 @@ def exif():
                 
                 # print 'Working on : {}'.format(ident)
                 try:
-                    photo['exif'] = api.getexif(ident)
+                    photo['exif'] = api.cleanexif(api.getexif(ident))
                     data.append(photo)
                     idents.append(ident)
                     
-                    upload = scintillate.convert_time(photo['info']['dates']['lastupdate'])
-                    print ' added: {} {} {}'.format(photo['title'], upload, len(data))
+                    print ' added: {} {}'.format(photo['title'], len(data))
+                    
+                    if len(data)%10000 == 1:
+                        data.save()
                     
                 except HTTPError as e:
                     print e
