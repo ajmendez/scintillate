@@ -5,36 +5,40 @@ import data
 import time
 import calendar
 import exifread
+import exiftool
 import collections
 from pprint import pprint
 from datetime import datetime
 
 LOCAL_FILENAME = os.path.join(data.DIRECTORY, 'local.tar.gz')
 EXTS = ['jpg','jpeg', 'cr2', 'png', 'mov']
-DATETIME_TAGS = ['EXIF'+x for x in api.DATETIME_TAGS] + ['Image DateTime']
-SUBSEC_TAGS = ['EXIF'+x for x in api.SUBSEC_TAGS]
+DATETIME_TAGS = ['EXIF:'+x for x in api.DATETIME_TAGS] + ['Image DateTime']
+SUBSEC_TAGS = ['EXIF:'+x for x in api.SUBSEC_TAGS]
 
-import PIL.Image, PIL.ExifTags
-def getExif(filename):
-    '''Gets the EXIF data from a file'''
-    badTags = ['MakerNote', 'UserComment']
-    badTags = []
-    ret = {}
-    try:
-        image = PIL.Image.open(filename)
-        if hasattr(image, '_getexif'):
-            exifinfo = image._getexif()
-            if exifinfo != None:
-                # pprint(exifinfo)
-                # ret['_filename'] = filename
-                for tag, value in exifinfo.items():
-                    decoded = PIL.ExifTags.TAGS.get(tag, tag)
-                    if decoded not in badTags:
-                        ret[decoded] = value
-    except IOError as e:
-        print('IOERROR ' + filename)
-        print(' >> ' + e.message)
-    return ret
+ET = exiftool.ExifTool() 
+ET.start()
+
+# import PIL.Image, PIL.ExifTags
+# def getExif(filename):
+#     '''Gets the EXIF data from a file'''
+#     badTags = ['MakerNote', 'UserComment']
+#     badTags = []
+#     ret = {}
+#     try:
+#         image = PIL.Image.open(filename)
+#         if hasattr(image, '_getexif'):
+#             exifinfo = image._getexif()
+#             if exifinfo != None:
+#                 # pprint(exifinfo)
+#                 # ret['_filename'] = filename
+#                 for tag, value in exifinfo.items():
+#                     decoded = PIL.ExifTags.TAGS.get(tag, tag)
+#                     if decoded not in badTags:
+#                         ret[decoded] = value
+#     except IOError as e:
+#         print('IOERROR ' + filename)
+#         print(' >> ' + e.message)
+#     return ret
 
 
 
@@ -43,12 +47,24 @@ class Directory(object):
         self.exts = EXTS
         self.data = {}
     
+    def getexif(self, filename):
+        return ET.get_metadata(filename)
+        # return exifread.process_file(open(filename, 'rb'))
+        # image = PIL.Image.open(filename)
+        # # pprint(getExif(filename))
+        # if hasattr(image, '_getexif'):
+        #     exif  = image._getexif()
+        
     def gettag(self, exif, tag):
+        return exif[tag]
+        # return exif[tag].values
+        
+        ## crap
         # if tag == 'MakerNote ImageUniqueID':
         #     return list(exif[tag].values)
         # else:
         #     return str(exif[tag])
-        return exif[tag].values
+        ## old
         # for number,name in PIL.ExifTags.TAGS.iteritems():
         #     if name == tag:
         #         return exif[number]
@@ -69,7 +85,7 @@ class Directory(object):
     
     
     def getdate(self, exif):
-        tags = ['exif ']
+        tags = ['exif']
         tmp = self.gettags(exif, DATETIME_TAGS, self.parsedate)
         return tmp if tmp else 0
     
@@ -78,7 +94,7 @@ class Directory(object):
         tmp = self.gettags(exif, SUBSEC_TAGS, fcn)
         return tmp if tmp else 0
     
-    def exifdate(self, exif):
+    def exiftime(self, exif):
         ndate = 0.0
         try:
             ndate += self.getdate(exif)
@@ -88,34 +104,48 @@ class Directory(object):
             print 'Failed to load: {}'.format(e)
         return ndate
     
+    def powershotserial(self, serial, cam=False):
+        if isinstance(serial, (str,unicode)) and len(serial) == 32:
+            if cam:
+                return serial[12:]
+            else:
+                return serial[:12]
+        return serial
+    
     def camserial(self, exif):
-        fcn = lambda x: x[0]
-        tmp = self.gettags(exif, ['MakerNote SerialNumber', 'MakerNote InternalSerialNumber '], fcn)
+        # tags = ['MakerNote SerialNumber', 'MakerNote InternalSerialNumber ']
+        tags = ['MakerNotes:SerialNumber', 'MakerNotes:InternalSerialNumber',
+                'MakerNotes:ImageUniqueID']
+        fcn = lambda x: self.powershotserial(x, True)
+        tmp = self.gettags(exif, tags, fcn)
         return tmp if tmp else 0
     
     def cammodel(self, exif):
+        # tags = ['Image Model']
+        tags = ['EXIF:Model', 'MakerNotes:CanonImageType']
         fcn = lambda x: x
-        tmp = self.gettags(exif, ['Image Model'], fcn)
+        tmp = self.gettags(exif, tags, fcn)
         return tmp if tmp else 0
     
     def imgserial(self, exif):
-        fcn = lambda x: x if isinstance(x,str) else ''.join(hex(c)[2:] for c in x)
+        # tags = ['MakerNote ImageUniqueID']
+        tags = ['MakerNotes:ImageUniqueID']
+        fcn = lambda x: self.powershotserial(x, False)
+        # fcn = lambda x: x if isinstance(x,str) else ''.join(hex(c)[2:] for c in x)
         # fcn = lambda x: ''.join(hex(c)[2:] for c in x)
-        tmp = self.gettags(exif, ['MakerNote ImageUniqueID'], fcn)
+        tmp = self.gettags(exif, tags, fcn)
         return tmp if tmp else 0
     
     def imgnumber(self, exif):
-        fcn = lambda x: x[0]
-        tmp = self.gettags(exif, ['MakerNote ImageNumber'], fcn)
-        return tmp if tmp else 0
-    
-    def getexif(self, filename):
-        return exifread.process_file(open(filename, 'rb'))
-        # image = PIL.Image.open(filename)
-        # # pprint(getExif(filename))
-        # if hasattr(image, '_getexif'):
-        #     exif  = image._getexif()
-    
+        tags = ['MakerNotes:FileIndex', 'MakerNotes:FileNumber']
+        tags2 = ['MakerNotes:DirectoryIndex']
+        fcn = lambda x: x
+        tmp = self.gettags(exif, tags, fcn)
+        tmp2 = self.gettags(exif, tags2, fcn)
+        if tmp2 is None:
+            return tmp if tmp else 0
+        return '{}-{}'.format(tmp2,tmp) if tmp else 0
+
     def cdate(self, date):
         if isinstance(date, (int, float)):
             return self.cdate(datetime.fromtimestamp(date))
@@ -133,7 +163,7 @@ class Directory(object):
                 size = os.path.getsize(filename),
              created = os.path.getctime(filename),
             modified = os.path.getmtime(filename),
-                exif = self.exifdate(exif),
+            exiftime = self.exiftime(exif),
            camserial = self.camserial(exif),
            imgserial = self.imgserial(exif),
            imgnumber = self.imgnumber(exif),
@@ -172,24 +202,32 @@ if __name__ == '__main__':
     util.setup_stop()
     
     
+    
+    ## Walk Tests
+    # local = Directory()
+    # local.walk(sys.argv[1])
+    # pprint(local.data)
+    
+    ## File Tests
     local = Directory()
-    local.walk(sys.argv[1])
-    pprint(local.data)
+    pprint(local.getexif(sys.argv[1]))
+    pprint(local.file(sys.argv[1]))
     
-    # pprint(getExif('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2957.JPG'))
-    #[13, 88, 211, 211, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
-    # [10, 88, 141, 208, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
-    # [11, 88, 145, 208, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
-    # [08, 88, 233, 209, 254, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
-    # [94, 66, 103, 242, 226, 218, 53, 83, 195, 128, 165, 136, 61, 216, 132, 212]
+    ## Exif tests
     
-    # f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_4019.JPG','rb')
-    f =open('/Users/ajmendez/Desktop/tmp/IMG_0834.JPG','rb')
-    # f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2957.JPG','rb')
-    # f = open('/Users/ajmendez/Downloads/Rome to External Disk/IMG_2956.JPG','rb')
-    # f = open('/Users/ajmendez/Downloads/_pictures/ChTv638.jpg')
-    exif = exifread.process_file(f)
+    filename = '/Volumes/Pictures/Camera_2014.03/03.13/100CANON/IMG_0256.JPG'
+    # pprint(getExif(filename))
+    
+    # f = open(filename,'rb')
+    # exif = exifread.process_file(f)
     # pprint(exif)
+    
+    # pprint(ET.get_metadata(filename))
+    
+    
+    
+    
+    
     # print exif['MakerNote ImageUniqueID']
     # raise ValueError()
     # pprint(getExif(os.path.abspath(os.path.expanduser(sys.argv[1]))))

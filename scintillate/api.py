@@ -4,6 +4,7 @@ import os
 import sys
 import pwd
 import grp
+import copy
 import json
 import time
 import tarfile
@@ -180,6 +181,40 @@ class Flickr(object):
         )
         for item,tags in items.iteritems():
             yield item, self._silenttags(exif, tags, fcn)
+    
+    def cleanexif(self, exif):
+        '''Parse out some of the tags'''
+        BAD_LABEL = ['User Def', 'AF', 'Contrast','Saturation','Sharpness',
+                     'Interop','LCDDisplay', 'Set Button', 'Effect',
+                     'Thumbnail']
+        BAD_TAG = ['AELock', 'WB_', 'WBS', 'WBB', 'Effect', 'RGGB',
+                   'ColorTone','Sensor','Resolution',
+                   'ColorTemp', 'BlackMask', 'Crop', 'DustRemovalData',
+                   'FlashBits','ZoomTargetWidth','ZoomSourceWidth',
+                   'BaseISO','ManualFlashOutput','OriginalDecisionDataOffset',
+                   'VRDOffset','FlashMeteringMode', 'CanonFirmwareVersion',
+                   'ComponentsConfiguration', 'YCbCrPositioning','ExifVersion',
+                   'ColorDataVersion','ToneCurve','WhiteBalanceRed','WhiteBalanceBlue']
+        BAD_SPACE = ['CanonCustom']
+        BAD = [[b.lower() for b in bad] 
+               for bad in [BAD_LABEL,BAD_TAG,BAD_SPACE]]
+        
+        # out = copy.copy(exif)
+        out = []
+        remove_index = []
+        for i, item in enumerate(exif):
+            # out[i].pop('tagspaceid', None)
+            # out[i]['raw'] = out[i]['raw']['_content']
+            tmp = [item[x].lower() for x in ['label','tag','tagspace']]
+            isbad = any(b in it 
+                        for it,bd in zip(tmp,BAD) 
+                            for b in bd)
+            if not isbad:
+                # remove_index.append(i)
+                out.append([item[x] for x in ['tag','raw','tagspace', 'label']])
+        return out
+    
+    
     
     def getstats(self, date):
         '''Generator: gets the stats from a date
