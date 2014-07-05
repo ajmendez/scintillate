@@ -208,7 +208,8 @@ class Flickr(object):
                         for it,bd in zip(tmp,BAD) 
                             for b in bd)
             if not isbad:
-                out.append([str(item[x]) for x in ['tag','raw','tagspace', 'label']])
+                out.append(map(str, [item[x]['_content'] if x == 'raw' else item[x]
+                                     for x in ['tag','raw','tagspace', 'label']]))
         return out
     
     
