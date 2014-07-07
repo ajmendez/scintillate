@@ -68,9 +68,9 @@ class Data(object):
   
   def backup(self):
       '''Backup the original file before saving'''
-      backupfile = os.path.dirname(self.filename) + 'backup_'+os.path.basename(self.filename)
+      backupfile = os.path.join(os.path.dirname(self.filename),'backup_'+os.path.basename(self.filename))
       print 'Backup: {}'.format(backupfile)
-      print subprocess.call(['rsync','-a',self.filename, backupfile])
+      print subprocess.call(['rsync', '-a', self.filename, backupfile])
   
   def save(self):
     '''Save the file as a json.dump or a tarfile depending
