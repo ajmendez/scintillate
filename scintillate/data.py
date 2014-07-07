@@ -27,15 +27,20 @@ class Data(object):
     '''Setup a Data object that is saved to a filename.
     fcn is the base datatype that starts the object if one does not exist.
     filename should be xxx.json, or xxx.tar.gz 
+    
+    Right now I only call the base function if it fails.  it might be better
+    to run it at the start and overwrite as needed to that there is always some
+    base data structure that does not need to be load() inited.
     '''
     self.filename = filename
     self.fcn = fcn
+    
     
   def __enter__(self, *args, **kwargs):
     '''With constructor -- asks user for confirmation if file
     does not exist -- I think this is a good thing.'''
     try:
-      self.data = self.load()
+      self.load()
     except Exception as e:
       self.data = self.fcn()
       print ' Failed to load: {}'.format(self.filename)
@@ -86,9 +91,9 @@ class Data(object):
     '''Load the file as a json file or a tar file.'''
     print 'Loading: {}'.format(self.filename)
     if '.tar.gz' in self.filename:
-      return self.loadgz()
+      self.data = self.loadgz()
     else:
-      return json.load(open(self.filename))
+      self.data = json.load(open(self.filename))
   
   def getname(self):
     '''get a nice file name to put within the tar file.'''
