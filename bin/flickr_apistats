@@ -54,6 +54,7 @@ def parsesoup(soup, date=None):
                 timescale = tmp2[-1]
                 # print qps, calls, timescale
                 d = formatdate(date - getoffset(date, k, timescale))
+                print d
                 out[d] = dict(
                     date = d,
                     qps = qps,

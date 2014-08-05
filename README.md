@@ -3,6 +3,10 @@ scintillate
 
 Scintillation maps flickr.
 
+flickrapi exiftool exifread beautifulsoup4 requests pymendez
+pip install git+https://github.com/smarnach/pyexiftool.git
+sudo apt-get install libimage-exiftool-perl
+
 
 * bin/flickr_files    : Searches through a directory to find photos to get
                          their modification date, EXIF date.
