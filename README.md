@@ -18,3 +18,5 @@ sudo apt-get install libimage-exiftool-perl
 TODO:
 * bin/flickr_dups : determine duplicates from website or files.
 * bin/flickr_backup : Backup of archived files to flickr without dups.
+* Automate graph making
+
