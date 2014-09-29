@@ -91,6 +91,31 @@ def _json(item):
     return data
 
 
+class Upload(object):
+    def __init__(self, credentials=CREDENTIALS, fmt='etree', cache=True):
+        '''Credentials is a list/tuple of key, secret, username, token
+        fmt is one of ['etree','xmlnode'] ? json breaks walk
+        '''
+        self.flickr = flickrapi.FlickrAPI(*credentials, format=fmt, cache=cache)
+        if cache:
+            c = flickrapi.SimpleCache(timeout=30000, max_entries=2000)
+            self.flickr.cache = c # mainly for length reasons
+    def push(self, filename, title, description, tags, ispublic=False):
+        def callback(progress, done):
+            if done:
+                print 'Finished!'
+            else:
+                print '%s%% '%progress
+        tmp = dict(
+            filename=filename,
+            title=title,
+            description=description,
+            tags=' '.join(['"%s"'%x for x in tags]) + ' scintillate',
+            is_public="1" if ispublic else "0",
+        )
+        self.flickr.upload(**tmp)
+    
+
 class Flickr(object):
     def __init__(self, credentials=CREDENTIALS, fmt='etree', cache=True):
         '''Credentials is a list/tuple of key, secret, username, token
