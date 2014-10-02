@@ -20,3 +20,4 @@ TODO:
 * bin/flickr_backup : Backup of archived files to flickr without dups.
 * Automate graph making
 
+http://atlee.ca/software/poster/
