@@ -46,7 +46,8 @@ def nprint(item, **kwargs):
 
 
 def ratelimit(n=3600, timescale=3600):
-    '''decorator that limits the function to be called N times per timescale [seconds].'''
+    '''decorator that limits the function to be called N times per timescale [seconds].
+    Broken?! need more tests'''
     def decorate(func):
         calls = []#deque(maxlen=n) # could probably use a list
         def ratelimiter(*args, **kwargs):
@@ -318,9 +319,6 @@ if __name__ == '__main__':
     #     print api.A()
     #     print api.B()
     
-    # rate limit test
-    # for i in range(1,100):
-    #     testrate(i)
     
     
     
