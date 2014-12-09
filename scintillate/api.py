@@ -63,7 +63,6 @@ def ratelimit(n=3600, timescale=3600):
                 else:
                     sys.stdout.write('.')
                     sys.stdout.flush()
-                    # doprint = True
                     time.sleep(0.5)
                     now = calendar.timegm(time.gmtime())
             
@@ -274,7 +273,7 @@ class Flickr(object):
             user_id = 'me', # me or flickr ID
             media = 'all',  # photos / videos / all
             per_page = 500, # < 500
-            # format = 'etree', # stupid
+            # format = 'etree', # Broken
         )
         tmp.update(kwargs)
         for i,photo in enumerate(self.flickr.walk(**tmp)):
@@ -304,13 +303,16 @@ class Flickr(object):
 if __name__ == '__main__':
     from pysurvey import util
     util.setup_stop()
-    
+        
+    # simple tests of exif reading.
     api = Flickr()
+    nprint(api.getexif('8409361473'))
+
     # for photo in api.genphotos():
     #     print photo
     #     break
     # print api.getinfo('8409361473')
-    nprint(api.getexif('8409361473'))
+
     
     # nprint(api.getstats(datetime(2014,6,5)))
     
