@@ -214,20 +214,6 @@ if __name__ == '__main__':
     pprint(local.file(sys.argv[1]))
     
     ## Exif tests
-    
     filename = '/Volumes/Pictures/Camera_2014.03/03.13/100CANON/IMG_0256.JPG'
     # pprint(getExif(filename))
     
-    # f = open(filename,'rb')
-    # exif = exifread.process_file(f)
-    # pprint(exif)
-    
-    # pprint(ET.get_metadata(filename))
-    
-    
-    
-    
-    
-    # print exif['MakerNote ImageUniqueID']
-    # raise ValueError()
-    # pprint(getExif(os.path.abspath(os.path.expanduser(sys.argv[1]))))
