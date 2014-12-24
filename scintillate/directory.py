@@ -4,8 +4,6 @@ import api
 import data
 import time
 import calendar
-import exifread
-import exiftool
 import collections
 from pprint import pprint
 from datetime import datetime
@@ -15,8 +13,13 @@ EXTS = ['jpg','jpeg', 'cr2', 'png', 'mov']
 DATETIME_TAGS = ['EXIF:'+x for x in api.DATETIME_TAGS] + ['Image DateTime']
 SUBSEC_TAGS = ['EXIF:'+x for x in api.SUBSEC_TAGS]
 
-ET = exiftool.ExifTool() 
-ET.start()
+try:
+    import exifread
+    import exiftool
+    ET = exiftool.ExifTool() 
+    ET.start()
+except:
+    ET=None
 
 # import PIL.Image, PIL.ExifTags
 # def getExif(filename):

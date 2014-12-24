@@ -23,3 +23,6 @@ TODO:
 * Automate graph making
 
 http://atlee.ca/software/poster/
+
+
+pip install -I flickrapi==1.4.5
