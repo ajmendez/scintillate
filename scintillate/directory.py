@@ -16,8 +16,6 @@ SUBSEC_TAGS = ['EXIF:'+x for x in api.SUBSEC_TAGS]
 try:
     import exifread
     import exiftool
-    ET = exiftool.ExifTool() 
-    ET.start()
 except:
     ET=None
 
@@ -49,9 +47,11 @@ class Directory(object):
     def __init__(self, exts=EXTS):
         self.exts = EXTS
         self.data = {}
+        self.ET = exiftool.ExifTool() 
+        self.ET.start()
     
     def getexif(self, filename):
-        return ET.get_metadata(filename)
+        return self.ET.get_metadata(filename)
         # return exifread.process_file(open(filename, 'rb'))
         # image = PIL.Image.open(filename)
         # # pprint(getExif(filename))
